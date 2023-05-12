@@ -98,9 +98,10 @@ class AffinePoint:
         return not self.__eq__(other)
 
     def __mul__(self, c) -> AffinePoint:
-        if not isinstance(c, Fq) and not isinstance(c, int):
+        if isinstance(c, (Fq, int)):
+            return scalar_mult_jacobian(c, self.to_jacobian(), self.ec).to_affine()
+        else:
             raise ValueError("Error, must be int or Fq")
-        return scalar_mult_jacobian(c, self.to_jacobian(), self.ec).to_affine()
 
     def negate(self) -> AffinePoint:
         return AffinePoint(self.x, -self.y, self.infinity, self.ec)
@@ -143,9 +144,7 @@ class JacobianPoint:
         self.ec = ec
 
     def is_on_curve(self) -> bool:
-        if self.infinity:
-            return True
-        return self.to_affine().is_on_curve()
+        return True if self.infinity else self.to_affine().is_on_curve()
 
     def negate(self) -> JacobianPoint:
         return self.to_affine().negate().to_jacobian()
@@ -187,9 +186,10 @@ class JacobianPoint:
         return not self.__eq__(other)
 
     def __mul__(self, c) -> JacobianPoint:
-        if not isinstance(c, int) and not isinstance(c, Fq):
+        if isinstance(c, (int, Fq)):
+            return scalar_mult_jacobian(c, self, self.ec)
+        else:
             raise ValueError("Error, must be int or Fq")
-        return scalar_mult_jacobian(c, self, self.ec)
 
     def __rmul__(self, c) -> JacobianPoint:
         return self.__mul__(c)
@@ -253,11 +253,7 @@ def point_to_bytes(point, ec, FE) -> bytes:
     if point.infinity:
         return bytes([0x40]) + bytes([0] * (len(output) - 1))
 
-    if FE == Fq:
-        sign = sign_Fq(point.y, ec)
-    else:
-        sign = sign_Fq2(point.y, ec)
-
+    sign = sign_Fq(point.y, ec) if FE == Fq else sign_Fq2(point.y, ec)
     if sign:
         output[0] |= 0xA0
     else:
@@ -292,23 +288,15 @@ def bytes_to_point(buffer: bytes, ec, FE) -> JacobianPoint:
     buffer = bytes([buffer[0] & 0x1F]) + buffer[1:]
 
     if I_bit == 1:
-        if any([e != 0 for e in buffer]):
+        if any(e != 0 for e in buffer):
             raise ValueError("Point at infinity set, but data not all zeroes")
         return AffinePoint(FE.zero(ec.q), FE.zero(ec.q), True, ec).to_jacobian()
 
     x = FE.from_bytes(buffer, ec.q)
     y_value = y_for_x(x, ec, FE)
 
-    if FE == Fq:
-        sign_fn = sign_Fq
-    else:
-        sign_fn = sign_Fq2
-
-    if sign_fn(y_value, ec) == S_bit:
-        y = y_value
-    else:
-        y = -y_value
-
+    sign_fn = sign_Fq if FE == Fq else sign_Fq2
+    y = y_value if sign_fn(y_value, ec) == S_bit else -y_value
     return AffinePoint(x, y, False, ec).to_jacobian()
 
 

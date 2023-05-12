@@ -33,7 +33,7 @@ def core_verify_mpl(
 
 
 def core_aggregate_mpl(signatures: List[JacobianPoint]) -> JacobianPoint:
-    if len(signatures) < 1:
+    if not signatures:
         raise ValueError("Must aggregate at least 1 signature")
     aggregate = signatures[0]
     aggregate.check_valid()
@@ -46,7 +46,7 @@ def core_aggregate_mpl(signatures: List[JacobianPoint]) -> JacobianPoint:
 def core_aggregate_verify(
     pks: List[JacobianPoint], ms: List[bytes], signature: JacobianPoint, dst: bytes
 ) -> bool:
-    if len(pks) != len(ms) or len(pks) < 1:
+    if len(pks) != len(ms) or not pks:
         return False
     try:
         signature.check_valid()
@@ -83,7 +83,7 @@ class BasicSchemeMPL:
     def aggregate_verify(
         pks: List[JacobianPoint], ms: List[bytes], signature: JacobianPoint
     ) -> bool:
-        if len(pks) != len(ms) or len(pks) < 1:
+        if len(pks) != len(ms) or not pks:
             return False
         if len(set(ms)) != len(ms):
             # Disallow repeated messages
@@ -125,7 +125,7 @@ class AugSchemeMPL:
     def aggregate_verify(
         pks: List[JacobianPoint], ms: List[bytes], signature: JacobianPoint
     ) -> bool:
-        if len(pks) != len(ms) or len(pks) < 1:
+        if len(pks) != len(ms) or not pks:
             return False
         m_primes = [bytes(pks[i]) + ms[i] for i in range(len(pks))]
         return core_aggregate_verify(pks, m_primes, signature, aug_scheme_dst)
@@ -164,7 +164,7 @@ class PopSchemeMPL:
     def aggregate_verify(
         pks: List[JacobianPoint], ms: List[bytes], signature: JacobianPoint
     ) -> bool:
-        if len(pks) != len(ms) or len(pks) < 1:
+        if len(pks) != len(ms) or not pks:
             return False
         return core_aggregate_verify(pks, ms, signature, pop_scheme_dst)
 
@@ -189,7 +189,7 @@ class PopSchemeMPL:
     def fast_aggregate_verify(
         pks: List[JacobianPoint], message: bytes, signature: JacobianPoint
     ) -> bool:
-        if len(pks) < 1:
+        if not pks:
             return False
         aggregate: JacobianPoint = pks[0]
         for pk in pks[1:]:

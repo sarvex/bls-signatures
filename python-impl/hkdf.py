@@ -23,8 +23,7 @@ def expand(L: int, prk: bytes, info: bytes) -> bytes:
             h = hmac.new(prk, T + info + bytes([i]), hashlib.sha256)
             T = h.digest()
         to_write = L - bytes_written
-        if to_write > BLOCK_SIZE:
-            to_write = BLOCK_SIZE
+        to_write = min(to_write, BLOCK_SIZE)
         okm += T[:to_write]
         bytes_written += to_write
     assert bytes_written == L

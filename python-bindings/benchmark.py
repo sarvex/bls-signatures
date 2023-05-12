@@ -37,19 +37,12 @@ def batch_verification():
         pk_bytes.append(bytes(pk))
         ms.append(message)
 
-    pks = []
-
     start = startStopwatch();
-    for pk in pk_bytes:
-        pks.append(G1Element.from_bytes(pk))
-
+    pks = [G1Element.from_bytes(pk) for pk in pk_bytes]
     endStopwatch("Public key validation", start, numIters);
 
-    sigs = []
-
     start = startStopwatch()
-    for sig in sig_bytes:
-        sigs.append(G2Element.from_bytes(sig))
+    sigs = [G2Element.from_bytes(sig) for sig in sig_bytes]
     endStopwatch("Signature validation", start, numIters);
 
     start = startStopwatch()

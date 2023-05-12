@@ -18,10 +18,9 @@ def I2OSP(val, length):
         ret[idx] = val_ & 0xFF
         val_ = val_ >> 8
     ret = bytes(ret)
-    assert ret == int(val).to_bytes(length, "big"), "oops: %s %s" % (
-        str(ret),
-        str(int(val).to_bytes(length, "big")),
-    )
+    assert ret == int(val).to_bytes(
+        length, "big"
+    ), f'oops: {ret} {int(val).to_bytes(length, "big")}'
     return ret
 
 
@@ -61,7 +60,7 @@ def expand_message_xmd(msg, DST, len_in_bytes, hash_fn):
             _strxor(b_0, b_vals[idx - 1]) + I2OSP(idx + 1, 1) + DST_prime
         ).digest()
     pseudo_random_bytes = b"".join(b_vals)
-    return pseudo_random_bytes[0:len_in_bytes]
+    return pseudo_random_bytes[:len_in_bytes]
 
 
 def expand_message_xof(msg, DST, len_in_bytes, hash_fn):

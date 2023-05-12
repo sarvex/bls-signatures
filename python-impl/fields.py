@@ -25,9 +25,7 @@ class Fq:
         return Fq(self.Q, self.value + other.value)
 
     def __radd__(self, other: Fq) -> Fq:
-        if not isinstance(other, Fq):
-            return NotImplemented
-        return self.__add__(other)
+        return NotImplemented if not isinstance(other, Fq) else self.__add__(other)
 
     def __sub__(self, other: Fq) -> Fq:
         if not isinstance(other, Fq):
@@ -67,11 +65,11 @@ class Fq:
 
     def __str__(self):
         s = hex(self.value)
-        s2 = s[0:7] + ".." + s[-5:] if len(s) > 10 else s
-        return "Fq(" + s2 + ")"
+        s2 = f"{s[:7]}..{s[-5:]}" if len(s) > 10 else s
+        return f"Fq({s2})"
 
     def __repr__(self):
-        return "Fq(" + hex(self.value) + ")"
+        return f"Fq({hex(self.value)})"
 
     def __bytes__(self):
         return self.value.to_bytes(48, "big")
@@ -259,13 +257,11 @@ class FieldExtBase(tuple):
             if cls.extension == other.extension:
                 for j, y in enumerate(other):
                     if x and y:
-                        if i + j >= self.embedding:
-                            buf[(i + j) % self.embedding] += x * y * self.root
-                        else:
-                            buf[(i + j) % self.embedding] += x * y
-            else:
-                if x:
-                    buf[i] = x * other
+                        buf[(i + j) % self.embedding] += (
+                            x * y * self.root if i + j >= self.embedding else x * y
+                        )
+            elif x:
+                buf[i] = x * other
         ret = super().__new__(cls, buf)
         ret.Q = self.Q
         ret.root = self.root
@@ -278,20 +274,25 @@ class FieldExtBase(tuple):
         return self * ~other
 
     def __eq__(self, other):
-        if not isinstance(other, type(self)):
-            if isinstance(other, FieldExtBase) or isinstance(other, int):
-                if (
-                    not isinstance(other, FieldExtBase)
-                    or self.extension > other.extension
-                ):
-                    for i in range(1, self.embedding):
-                        if self[i] != (type(self.root).zero(self.Q)):
-                            return False
-                    return self[0] == other
-                return NotImplemented
-            return NotImplemented
-        else:
+        if isinstance(other, type(self)):
             return super().__eq__(other) and self.Q == other.Q
+        if (
+            isinstance(other, FieldExtBase)
+            and self.extension > other.extension
+            or not isinstance(other, FieldExtBase)
+            and isinstance(other, int)
+        ):
+            return next(
+                (
+                    False
+                    for i in range(1, self.embedding)
+                    if self[i] != (type(self.root).zero(self.Q))
+                ),
+                self[0] == other,
+            )
+        elif isinstance(other, FieldExtBase):
+            return NotImplemented
+        return NotImplemented
 
     def __lt__(self, other):
         # Reverse the order for comparison (3i + 1 > 2i + 7)
@@ -325,7 +326,7 @@ class FieldExtBase(tuple):
     def __bytes__(self):
         sum_bytes = bytes([])
         for x in reversed(self):
-            if type(x) != FieldExtBase and type(x) != Fq:
+            if type(x) not in [FieldExtBase, Fq]:
                 x = Fq.from_fq(self.Q, x)
             sum_bytes += bytes(x)
         return sum_bytes
@@ -334,9 +335,10 @@ class FieldExtBase(tuple):
     def from_bytes(cls, buffer: bytes, Q: int):
         assert len(buffer) == cls.extension * 48
         embedded_size = 48 * (cls.extension // cls.embedding)
-        tup = []
-        for i in range(cls.embedding):
-            tup.append(buffer[i * embedded_size : (i + 1) * embedded_size])
+        tup = [
+            buffer[i * embedded_size : (i + 1) * embedded_size]
+            for i in range(cls.embedding)
+        ]
         return cls(Q, *[cls.basefield.from_bytes(b, Q) for b in reversed(tup)])
 
     __truediv__ = __floordiv__
@@ -357,7 +359,7 @@ class FieldExtBase(tuple):
         return ans
 
     def __bool__(self):
-        return any(x for x in self)
+        return any(self)
 
     def set_root(self, _root):
         self.root = _root
@@ -423,8 +425,7 @@ class Fq2(FieldExtBase):
     def __invert__(self) -> Fq2:
         a, b = self
         factor = ~(a * a + b * b)
-        ret = Fq2(self.Q, a * factor, -b * factor)
-        return ret
+        return Fq2(self.Q, a * factor, -b * factor)
 
     def mul_by_nonresidue(self) -> Fq2:
         # multiply by u + 1

@@ -179,7 +179,7 @@ def test_vectors_valid():
     ref_sigAPop = b"\xa4\xeat+\xcd\xc1U>\x9c\xa4\xe5`\xbe~^ln\xfajd\xdd\xdf\x9c\xa3\xbb(T#=\x85\xa6\xaa\xc1\xb7n\xc7\xd1\x03\xdbN3\x14\x8b\x82\xaf\x99#\xdb\x05\x93Jn\xce\x9aq\x01\xcd\x8a\x9dG\xce'\x97\x80V\xb0\xf5\x90\x00!\x81\x8cEi\x8a\xfd\xd6\xcf\x8ako\x7f\xee\x1f\x0bCqoU\xe4\x13\xd4\xb8z`9"
 
     secret1 = bytes([1] * 32)
-    secret2 = bytes([x * 314159 % 256 for x in range(32)])
+    secret2 = bytes(x * 314159 % 256 for x in range(32))
     sk1 = PrivateKey.from_bytes(secret1)
     sk2 = PrivateKey.from_bytes(secret2)
 
@@ -341,12 +341,12 @@ def test_invalid_points():
     good_point = sk1.get_g1()
     good_point_bytes = bytes(good_point)
     start = time.time()
-    for i in range(2000):
+    for _ in range(2000):
         gp1 = G1Element.from_bytes(good_point_bytes)
     print(f"from_bytes avg: {(time.time() - start) }")
 
     start = time.time()
-    for i in range(2000):
+    for _ in range(2000):
         gp2 = G1Element.from_bytes_unchecked(good_point_bytes)
     print(f"from_bytes_unchecked avg: {(time.time() - start) }")
     assert gp1 == gp2

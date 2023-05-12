@@ -24,7 +24,7 @@ def ikm_to_lamport_sk(ikm: bytes, salt: bytes) -> bytes:
 def parent_sk_to_lamport_pk(parent_sk: PrivateKey, index: int) -> bytes:
     salt = index.to_bytes(4, "big")
     ikm = bytes(parent_sk)
-    not_ikm = bytes([e ^ 0xFF for e in ikm])  # Flip bits
+    not_ikm = bytes(e ^ 0xFF for e in ikm)
     lamport0 = ikm_to_lamport_sk(ikm, salt)
     lamport1 = ikm_to_lamport_sk(not_ikm, salt)
 

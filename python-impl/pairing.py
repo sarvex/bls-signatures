@@ -18,7 +18,7 @@ def int_to_bits(i: int) -> List[int]:
     bits = []
     while i != 0:
         bits.append(i % 2)
-        i = i // 2
+        i //= 2
     return list(reversed(bits))
 
 
@@ -84,13 +84,12 @@ def final_exponentiation(element: Fq12, ec=default_ec) -> Fq12:
     Performs a final exponentiation to map the result of the Miller
     loop to a unique element of Fq12.
     """
-    if ec.k == 12:
-        ans = element ** ((pow(ec.q, 4) - pow(ec.q, 2) + 1) // ec.n)
-        ans = ans.qi_power(2) * ans
-        ans = ans.qi_power(6) / ans
-        return ans
-    else:
+    if ec.k != 12:
         return element ** ((pow(ec.q, ec.k) - 1) // ec.n)
+    ans = element ** ((pow(ec.q, 4) - pow(ec.q, 2) + 1) // ec.n)
+    ans = ans.qi_power(2) * ans
+    ans = ans.qi_power(6) / ans
+    return ans
 
 
 def ate_pairing(P: JacobianPoint, Q: JacobianPoint, ec=default_ec) -> Fq12:

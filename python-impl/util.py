@@ -16,9 +16,9 @@ def hash512(m):
 
 
 def hmac256(m, k):
-    if type(m) != bytes and type(m) != bytearray:
+    if type(m) not in [bytes, bytearray]:
         m = m.encode("utf-8")
-    if type(k) != bytes and type(k) != bytearray:
+    if type(k) not in [bytes, bytearray]:
         k = k.encode("utf-8")
     k = bytes(k)
     if len(k) > HMAC_BLOCK_SIZE:
@@ -27,8 +27,8 @@ def hmac256(m, k):
         k += bytes([0])
     opad = bytes([0x5C] * HMAC_BLOCK_SIZE)
     ipad = bytes([0x36] * HMAC_BLOCK_SIZE)
-    kopad = bytes([k[i] ^ opad[i] for i in range(HMAC_BLOCK_SIZE)])
-    kipad = bytes([k[i] ^ ipad[i] for i in range(HMAC_BLOCK_SIZE)])
+    kopad = bytes(k[i] ^ opad[i] for i in range(HMAC_BLOCK_SIZE))
+    kipad = bytes(k[i] ^ ipad[i] for i in range(HMAC_BLOCK_SIZE))
     return hash256(kopad + hash256(kipad + m))
 
 
